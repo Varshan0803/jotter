@@ -12,6 +12,10 @@ create table if not exists public.notes (
   updated_at  bigint
 );
 
+-- Added with the to-do filters: 'bada' (big) or 'chotta' (small) for to-dos, empty otherwise.
+-- Existing databases: run just the next line in the SQL Editor.
+alter table public.notes add column if not exists complexity text not null default '' check (complexity in ('', 'bada', 'chotta'));
+
 create index if not exists notes_user_created_idx on public.notes (user_id, created_at desc);
 
 -- Row-level security: every signed-in user can only see and change their own rows.

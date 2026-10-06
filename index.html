@@ -10,6 +10,7 @@
   --ink:#16191D; --muted:#565D66; --line:#DDE0DA; --line2:#CFD3CB; --hover:#E6E8E2;
   --on:#16191D; --onink:#FFFFFF; --accent:#2F5D8A; --accent-ink:#2F5D8A; --icon:#4A515A; --box:#7B828B; --doneink:#6A717A;
   --th-bg:#E4ECF6; --th-ink:#1F4470; --td-bg:#FBEBD3; --td-ink:#6E3A05; --wi-bg:#EBE3F4; --wi-ink:#4F2E78;
+  --bada-bg:#FBDDDD; --bada-ink:#8A1F2B; --chotta-bg:#DAF0E1; --chotta-ink:#1E5B3A;
   --scrim:rgba(0,0,0,.5); --shadow:rgba(0,0,0,.12);
   --display:'Bricolage Grotesque',system-ui,sans-serif; --body:'Figtree',system-ui,sans-serif;
 }
@@ -19,6 +20,7 @@
     --ink:#ECEEF0; --muted:#A0A8B2; --line:#2A2F36; --line2:#3E454E; --hover:#252A31;
     --on:#ECEEF0; --onink:#111418; --accent-ink:#97AEC4; --icon:#A8B0BA; --box:#8A929C; --doneink:#838B95;
     --th-bg:#1E3250; --th-ink:#BBD4F5; --td-bg:#4A3213; --td-ink:#F5D3A0; --wi-bg:#38274F; --wi-ink:#D9C6F2;
+    --bada-bg:#4F1F26; --bada-ink:#F5B8BF; --chotta-bg:#1F4030; --chotta-ink:#B5E6C8;
     --shadow:rgba(0,0,0,.4); color-scheme:dark;
   }
 }
@@ -27,6 +29,7 @@
   --ink:#ECEEF0; --muted:#A0A8B2; --line:#2A2F36; --line2:#3E454E; --hover:#252A31;
   --on:#ECEEF0; --onink:#111418; --accent-ink:#97AEC4; --icon:#A8B0BA; --box:#8A929C; --doneink:#838B95;
   --th-bg:#1E3250; --th-ink:#BBD4F5; --td-bg:#4A3213; --td-ink:#F5D3A0; --wi-bg:#38274F; --wi-ink:#D9C6F2;
+  --bada-bg:#4F1F26; --bada-ink:#F5B8BF; --chotta-bg:#1F4030; --chotta-ink:#B5E6C8;
   --shadow:rgba(0,0,0,.4); color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -88,11 +91,17 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
 .card:hover{box-shadow:0 6px 18px var(--shadow)}
 .card.is-done{background:var(--surface2)}
 .ctop{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cplx[hidden]{display:none}
+.sub .short{display:none}
 .kindchip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:600}
 .k-thought{background:var(--th-bg);color:var(--th-ink)}
 .k-todo{background:var(--td-bg);color:var(--td-ink)}
 .k-wish{background:var(--wi-bg);color:var(--wi-ink)}
-.date{font-size:13px;color:var(--muted)}
+.k-bada{background:var(--bada-bg);color:var(--bada-ink)}
+.k-chotta{background:var(--chotta-bg);color:var(--chotta-ink)}
+.chips{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.date{font-size:13px;color:var(--muted);margin-left:auto}
+.ctop{justify-content:flex-start}
 .cbody{display:flex;align-items:flex-start;gap:4px}
 .check{flex:none;width:44px;height:44px;margin:-8px 0 -8px -10px;border:0;background:transparent;display:inline-flex;align-items:center;justify-content:center}
 .box{width:24px;height:24px;border-radius:8px;border:2px solid var(--box);background:var(--surface);display:inline-flex;align-items:center;justify-content:center}
@@ -119,6 +128,8 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
   .app{display:block}
   main{padding:20px 16px calc(150px + env(safe-area-inset-bottom,0px));gap:16px}
   h1{font-size:32px}
+  .sub .long{display:none}
+  .sub .short{display:inline}
   input.field{width:100%}
   .searchwrap{flex:1 1 100%;order:3}
   .tools{width:100%}
@@ -160,6 +171,7 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
     <div class="sheet-head"><h2>Filters</h2><button type="button" class="iconbtn" data-act="closeSheet" aria-label="Close filters"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
     <nav class="desk-only" aria-label="Collections"><div class="navlabel">Collections</div><div id="navViews" style="display:contents"></div></nav>
     <nav aria-label="Status"><div class="navlabel">Status</div><div id="navStatus" style="display:contents"></div></nav>
+    <nav aria-label="Complexity"><div class="navlabel">Complexity</div><div id="navCplx" style="display:contents"></div></nav>
     <nav aria-label="Tags"><div class="navlabel">Tags</div><div id="navTags" style="display:contents"></div></nav>
     <div class="mobile-only" style="flex-direction:column;gap:8px">
       <label class="cap" for="sort2">Sort by</label>
@@ -175,7 +187,7 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
     <header class="top">
       <div>
         <h1 id="heading">All notes</h1>
-        <div class="sub" id="sub"></div>
+        <div class="sub"><span class="long" id="sub"></span><span class="short" id="subShort"></span></div>
       </div>
       <div class="tools">
         <label class="searchwrap"><span class="sr">Search notes</span>
@@ -196,6 +208,7 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
     <form class="composer" id="composer" autocomplete="off">
       <div class="sheet-head"><h2 id="composerTitle">New note</h2><button type="button" class="iconbtn" data-act="closeSheet" aria-label="Close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
       <div class="kinds" role="group" aria-label="Note type" id="kinds"></div>
+      <div class="kinds cplx" role="group" aria-label="Complexity" id="cplxPick" hidden></div>
       <label><span class="sr">Note text</span><textarea id="text" rows="2" placeholder="What is on your mind today?"></textarea></label>
       <div class="crow">
         <label>Tag <input type="text" id="tagIn" list="taglist" placeholder="optional" maxlength="24"></label>
@@ -255,9 +268,10 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
     todo: { label: 'To-do', cls: 'k-todo', ph: 'What needs to get done?' },
     wish: { label: 'Wishlist', cls: 'k-wish', ph: 'What would you like to have someday?' }
   };
+  var CPLX = { bada: { label: 'Bada', cls: 'k-bada' }, chotta: { label: 'Chotta', cls: 'k-chotta' } };
   var HEAD = { all: 'All notes', thought: 'Thoughts', todo: 'To-do list', wish: 'Wishlist' };
 
-  var S = { notes: [], ready: false, view: 'all', status: 'any', tag: 'all', pinnedOnly: false, sort: 'new', query: '', kind: 'thought', editingId: null, lastDeleted: null };
+  var S = { notes: [], ready: false, view: 'all', status: 'any', complexity: 'any', cplx: 'bada', tag: 'all', pinnedOnly: false, sort: 'new', query: '', kind: 'thought', editingId: null, lastDeleted: null };
   var store = null, signOutFn = null;
 
   /* ---------- storage ---------- */
@@ -299,7 +313,7 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
   function supaStore(client, uid, onChange) {
     var T = 'notes', mem = [], chan = null, timer = null, retry = null, stopped = false;
     function fromRow(r) {
-      return { id: r.id, kind: r.kind, text: r.text, tag: r.tag || '', done: !!r.done, pinned: !!r.pinned, createdAt: Number(r.created_at) || 0, updatedAt: Number(r.updated_at) || 0 };
+      return { id: r.id, kind: r.kind, text: r.text, tag: r.tag || '', done: !!r.done, pinned: !!r.pinned, complexity: r.complexity || '', createdAt: Number(r.created_at) || 0, updatedAt: Number(r.updated_at) || 0 };
     }
     function toRow(d) {
       var r = {};
@@ -308,6 +322,7 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
       if ('tag' in d) r.tag = d.tag || '';
       if ('done' in d) r.done = !!d.done;
       if ('pinned' in d) r.pinned = !!d.pinned;
+      if ('complexity' in d) r.complexity = d.complexity || '';
       if ('createdAt' in d) r.created_at = d.createdAt;
       if ('updatedAt' in d) r.updated_at = d.updatedAt;
       return r;
@@ -458,6 +473,7 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
       if (S.status === 'open' && !(n.kind !== 'thought' && !n.done)) return false;
       if (S.status === 'done' && !(n.kind !== 'thought' && n.done)) return false;
     }
+    if (skip !== 'complexity' && S.complexity !== 'any' && !(n.kind === 'todo' && n.complexity === S.complexity)) return false;
     if (skip !== 'tag' && S.tag !== 'all' && n.tag !== S.tag) return false;
     if (skip !== 'pinned' && S.pinnedOnly && !n.pinned) return false;
     if (q && ((n.text || '') + ' ' + (n.tag || '')).toLowerCase().indexOf(q) === -1) return false;
@@ -502,6 +518,12 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
       return navBtn('status', v[0], v[1], c, S.status === v[0]);
     }).join('') + navBtn('pinned', 'pinned', 'Pinned only', all.filter(function (n) { return n.pinned; }).length, S.pinnedOnly);
 
+    var cps = [['any', 'Any complexity'], ['bada', 'Bada'], ['chotta', 'Chotta']];
+    $('#navCplx').innerHTML = cps.map(function (v) {
+      var c = all.filter(function (n) { return matches(n, 'complexity') && (v[0] === 'any' || (n.kind === 'todo' && n.complexity === v[0])); }).length;
+      return navBtn('complexity', v[0], v[1], c, S.complexity === v[0]);
+    }).join('');
+
     var tagNames = [];
     all.forEach(function (n) { if (n.tag && tagNames.indexOf(n.tag) === -1) tagNames.push(n.tag); });
     tagNames.sort(function (a, b) { return a.localeCompare(b); });
@@ -519,6 +541,11 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
     $('#kinds').innerHTML = ['thought', 'todo', 'wish'].map(function (k) {
       return '<button type="button" class="chip' + (S.kind === k ? ' on' : '') + '" data-act="kind" data-key="' + k + '" data-fk="kind:' + k + '" aria-pressed="' + (S.kind === k) + '">' + svg(k, 16) + KINDS[k].label + '</button>';
     }).join('');
+    var cp = $('#cplxPick');
+    cp.hidden = S.kind !== 'todo';
+    cp.innerHTML = ['bada', 'chotta'].map(function (k) {
+      return '<button type="button" class="chip' + (S.cplx === k ? ' on' : '') + '" data-act="cplx" data-key="' + k + '" data-fk="cplx:' + k + '" aria-pressed="' + (S.cplx === k) + '">' + CPLX[k].label + '</button>';
+    }).join('');
     $('#text').placeholder = KINDS[S.kind].ph;
     $('#saveBtn').textContent = S.editingId ? 'Save changes' : 'Add note';
     $('#composerTitle').textContent = S.editingId ? 'Edit note' : 'New note';
@@ -526,11 +553,14 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
 
     $('#heading').textContent = HEAD[S.view];
     var today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-    $('#sub').textContent = today + ' · ' + visible.length + (visible.length === 1 ? ' note' : ' notes');
+    var short = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    var cnt = ' · ' + visible.length + (visible.length === 1 ? ' note' : ' notes');
+    $('#sub').textContent = today + cnt; $('#subShort').textContent = short + cnt;
     $('#showBtn').textContent = 'Show ' + visible.length + (visible.length === 1 ? ' note' : ' notes');
 
     var parts = [];
     if (S.status !== 'any') parts.push(S.status === 'open' ? 'open items' : 'done or got');
+    if (S.complexity !== 'any') parts.push(CPLX[S.complexity].label);
     if (S.tag !== 'all') parts.push('#' + S.tag);
     if (S.pinnedOnly) parts.push('pinned');
     if (S.query.trim()) parts.push('“' + S.query.trim() + '”');
@@ -544,7 +574,7 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
       var k = KINDS[n.kind] || KINDS.thought, can = n.kind !== 'thought', done = can && n.done;
       var lbl = n.kind === 'wish' ? 'got' : 'done';
       return '<article class="card' + (done ? ' is-done' : '') + '">' +
-        '<div class="ctop"><span class="kindchip ' + k.cls + '">' + svg(n.kind in KINDS ? n.kind : 'thought', 14, 2.2) + k.label + '</span><span class="date">' + esc(dateLabel(n.createdAt)) + '</span></div>' +
+        '<div class="ctop"><span class="kindchip ' + k.cls + '">' + svg(n.kind in KINDS ? n.kind : 'thought', 14, 2.2) + k.label + '</span>' + (n.kind === 'todo' && CPLX[n.complexity] ? '<span class="kindchip ' + CPLX[n.complexity].cls + '">' + CPLX[n.complexity].label + '</span>' : '') + '<span class="date">' + esc(dateLabel(n.createdAt)) + '</span></div>' +
         '<div class="cbody">' + (can ? '<button type="button" class="check" data-act="toggle" data-id="' + esc(n.id) + '" data-fk="toggle:' + esc(n.id) + '" aria-pressed="' + !!done + '" aria-label="' + (done ? 'Mark as not ' : 'Mark as ') + lbl + '"><span class="box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span></button>' : '') +
         '<p class="text">' + esc(n.text) + '</p></div>' +
         '<div class="cfoot"><span class="tag">' + (n.tag ? '# ' + esc(n.tag) : '') + '</span><div class="acts">' +
@@ -597,10 +627,12 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
     var act = t.getAttribute('data-act'), key = t.getAttribute('data-key'), id = t.getAttribute('data-id'), n;
     if (act === 'view') { S.view = key; if (key !== 'all') S.kind = key; render(); }
     else if (act === 'status') { S.status = key; render(); }
+    else if (act === 'complexity') { S.complexity = key; render(); }
+    else if (act === 'cplx') { S.cplx = key; render(); }
     else if (act === 'tag') { S.tag = key; render(); }
     else if (act === 'pinned') { S.pinnedOnly = !S.pinnedOnly; render(); }
     else if (act === 'kind') { S.kind = key; render(); }
-    else if (act === 'clear') { S.status = 'any'; S.tag = 'all'; S.pinnedOnly = false; S.query = ''; $('#search').value = ''; render(); }
+    else if (act === 'clear') { S.status = 'any'; S.complexity = 'any'; S.tag = 'all'; S.pinnedOnly = false; S.query = ''; $('#search').value = ''; render(); }
     else if (act === 'toggle') { n = find(id); if (n) store.patch(id, { done: !n.done }).catch(fail); }
     else if (act === 'pin') { n = find(id); if (n) store.patch(id, { pinned: !n.pinned }).catch(fail); }
     else if (act === 'del') {
@@ -610,7 +642,7 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
     }
     else if (act === 'edit') {
       n = find(id); if (!n) return;
-      S.editingId = id; S.kind = n.kind in KINDS ? n.kind : 'thought';
+      S.editingId = id; S.kind = n.kind in KINDS ? n.kind : 'thought'; S.cplx = CPLX[n.complexity] ? n.complexity : 'bada';
       $('#text').value = n.text || ''; $('#tagIn').value = n.tag || '';
       render(); document.body.classList.add('sheet-compose'); $('#text').focus();
       if (window.innerWidth > 760) $('#composer').scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -644,8 +676,8 @@ textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px
     if (!text) { $('#text').focus(); return; }
     var tag = $('#tagIn').value.trim().replace(/^#/, '');
     var p;
-    if (S.editingId) p = store.patch(S.editingId, { kind: S.kind, text: text, tag: tag, updatedAt: Date.now() });
-    else p = store.add({ kind: S.kind, text: text, tag: tag, done: false, pinned: false, createdAt: Date.now() });
+    if (S.editingId) p = store.patch(S.editingId, { kind: S.kind, text: text, tag: tag, complexity: S.kind === 'todo' ? S.cplx : '', updatedAt: Date.now() });
+    else p = store.add({ kind: S.kind, text: text, tag: tag, complexity: S.kind === 'todo' ? S.cplx : '', done: false, pinned: false, createdAt: Date.now() });
     resetComposer(); render(); closeSheet();
     p.catch(fail);
   }
