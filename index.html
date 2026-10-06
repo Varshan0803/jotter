@@ -1,0 +1,661 @@
+<!doctype html><html lang="en"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Jotter</title></head><body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: sidebar of filters plus a card grid on desktop; on a phone the sidebar becomes a filter sheet,
+   collections move to a bottom tab bar, and the composer opens from a plus button. */
+:root{
+  --bg:#F3F4F1; --side:#ECEEE8; --surface:#FFFFFF; --surface2:#F7F8F5; --input:#FAFAF8;
+  --ink:#16191D; --muted:#565D66; --line:#DDE0DA; --line2:#CFD3CB; --hover:#E6E8E2;
+  --on:#16191D; --onink:#FFFFFF; --accent:#2F5D8A; --accent-ink:#2F5D8A; --icon:#4A515A; --box:#7B828B; --doneink:#6A717A;
+  --th-bg:#E4ECF6; --th-ink:#1F4470; --td-bg:#FBEBD3; --td-ink:#6E3A05; --wi-bg:#EBE3F4; --wi-ink:#4F2E78;
+  --scrim:rgba(0,0,0,.5); --shadow:rgba(0,0,0,.12);
+  --display:'Bricolage Grotesque',system-ui,sans-serif; --body:'Figtree',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#111418; --side:#0C0F12; --surface:#1A1E24; --surface2:#15181D; --input:#14181C;
+    --ink:#ECEEF0; --muted:#A0A8B2; --line:#2A2F36; --line2:#3E454E; --hover:#252A31;
+    --on:#ECEEF0; --onink:#111418; --accent-ink:#97AEC4; --icon:#A8B0BA; --box:#8A929C; --doneink:#838B95;
+    --th-bg:#1E3250; --th-ink:#BBD4F5; --td-bg:#4A3213; --td-ink:#F5D3A0; --wi-bg:#38274F; --wi-ink:#D9C6F2;
+    --shadow:rgba(0,0,0,.4); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111418; --side:#0C0F12; --surface:#1A1E24; --surface2:#15181D; --input:#14181C;
+  --ink:#ECEEF0; --muted:#A0A8B2; --line:#2A2F36; --line2:#3E454E; --hover:#252A31;
+  --on:#ECEEF0; --onink:#111418; --accent-ink:#97AEC4; --icon:#A8B0BA; --box:#8A929C; --doneink:#838B95;
+  --th-bg:#1E3250; --th-ink:#BBD4F5; --td-bg:#4A3213; --td-ink:#F5D3A0; --wi-bg:#38274F; --wi-ink:#D9C6F2;
+  --shadow:rgba(0,0,0,.4); color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--body)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent-ink);outline-offset:2px}
+::placeholder{color:var(--muted);opacity:1}
+svg{flex:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+.app{display:flex;min-height:100vh}
+.side{flex:0 0 280px;align-self:flex-start;position:sticky;top:0;max-height:100vh;overflow-y:auto;padding:28px 20px;display:flex;flex-direction:column;gap:26px;background:var(--side);border-right:1px solid var(--line);min-height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:0 12px;font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-.01em}
+.logo{width:30px;height:30px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center}
+.side nav{display:flex;flex-direction:column;gap:4px}
+.navlabel{padding:0 12px 6px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.navbtn{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;min-height:44px;padding:0 12px;border:0;background:transparent;border-radius:10px;text-align:left}
+.navbtn:hover{background:var(--hover)}
+.navbtn.on{background:var(--on);color:var(--onink)}
+.navbtn .ct{font-size:13px;opacity:.8;font-variant-numeric:tabular-nums}
+.sheet-head{display:none;align-items:center;justify-content:space-between}
+.sheet-head h2{margin:0;font-family:var(--display);font-size:22px}
+.mobile-only{display:none}
+
+main{flex:1 1 0;min-width:0;padding:28px clamp(16px,4vw,48px) 56px;display:flex;flex-direction:column;gap:22px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+h1{margin:0;font-family:var(--display);font-weight:700;font-size:40px;line-height:1.05;letter-spacing:-.02em;text-wrap:balance}
+.sub{margin-top:6px;color:var(--muted)}
+.tools{display:flex;flex-wrap:wrap;gap:10px}
+.searchwrap{position:relative;display:block}
+.searchwrap svg{position:absolute;left:14px;top:13px;color:var(--muted)}
+.field{height:44px;border:1px solid var(--line2);border-radius:12px;background:var(--surface)}
+input.field{width:240px;max-width:100%;padding:0 14px 0 40px}
+select.field{padding:0 12px}
+.sqbtn{position:relative;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line2);background:var(--surface);border-radius:12px;color:var(--ink)}
+.sqbtn:hover{background:var(--hover)}
+.badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--accent);color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
+
+.composer{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.kinds{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 16px;border:1px solid var(--line2);background:var(--surface);border-radius:999px;display:inline-flex;align-items:center;gap:8px}
+.chip:hover{background:var(--hover)}
+.chip.on{background:var(--on);color:var(--onink);border-color:var(--on)}
+textarea{width:100%;resize:vertical;min-height:72px;padding:12px 14px;border:1px solid var(--line2);border-radius:12px;background:var(--input);line-height:1.45}
+.crow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.crow label{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}
+.crow input{height:44px;width:180px;max-width:100%;padding:0 12px;border:1px solid var(--line2);border-radius:12px;background:var(--input);color:var(--ink)}
+.cbtns{display:flex;gap:8px}
+.primary{height:44px;padding:0 22px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-weight:600}
+.ghost{height:44px;padding:0 16px;border:1px solid var(--line2);border-radius:12px;background:transparent}
+.cap{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+.filterline{display:flex;flex-wrap:wrap;align-items:center;gap:10px;color:var(--muted);font-size:14px}
+.notice{padding:10px 14px;border-radius:12px;background:var(--td-bg);color:var(--td-ink);font-size:14px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:16px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0;transition:box-shadow .15s}
+.card:hover{box-shadow:0 6px 18px var(--shadow)}
+.card.is-done{background:var(--surface2)}
+.ctop{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.kindchip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:600}
+.k-thought{background:var(--th-bg);color:var(--th-ink)}
+.k-todo{background:var(--td-bg);color:var(--td-ink)}
+.k-wish{background:var(--wi-bg);color:var(--wi-ink)}
+.date{font-size:13px;color:var(--muted)}
+.cbody{display:flex;align-items:flex-start;gap:4px}
+.check{flex:none;width:44px;height:44px;margin:-8px 0 -8px -10px;border:0;background:transparent;display:inline-flex;align-items:center;justify-content:center}
+.box{width:24px;height:24px;border-radius:8px;border:2px solid var(--box);background:var(--surface);display:inline-flex;align-items:center;justify-content:center}
+.box svg{opacity:0}
+.is-done .box{background:var(--accent);border-color:var(--accent-ink)}
+.is-done .box svg{opacity:1}
+.text{margin:0;flex:1;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.is-done .text{text-decoration:line-through;color:var(--doneink)}
+.cfoot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-4px -8px -8px 0}
+.tag{font-size:14px;color:var(--muted)}
+.acts{display:flex}
+.iconbtn{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;border-radius:10px;color:var(--icon)}
+.iconbtn:hover{background:var(--hover);color:var(--ink)}
+.iconbtn.pinned{color:var(--accent-ink)}
+.empty{border:1.5px dashed var(--line2);border-radius:16px;padding:40px 24px;text-align:center;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:8px}
+.empty strong{font-family:var(--display);font-size:22px;color:var(--ink)}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:12px;padding:6px 6px 6px 16px;border-radius:14px;background:var(--on);color:var(--onink);max-width:calc(100% - 32px)}
+.toast button{height:44px;padding:0 14px;border:0;border-radius:10px;background:transparent;color:inherit;font-weight:600;text-decoration:underline}
+
+.tabs,.fab,.scrim{display:none}
+
+@media (max-width:760px){
+  .app{display:block}
+  main{padding:20px 16px calc(150px + env(safe-area-inset-bottom,0px));gap:16px}
+  h1{font-size:32px}
+  input.field{width:100%}
+  .searchwrap{flex:1 1 100%;order:3}
+  .tools{width:100%}
+  .desk-only{display:none !important}
+  .mobile-only{display:flex}
+  .side,.composer{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:30;border-radius:22px 22px 0 0;border:0;border-top:1px solid var(--line);background:var(--surface);max-height:85%;overflow-y:auto;min-height:0;
+    padding:20px 16px calc(24px + env(safe-area-inset-bottom,0px));transform:translateY(105%);visibility:hidden;transition:transform .2s ease,visibility 0s linear .2s}
+  .side{gap:18px;flex:none}
+  .side .brand{display:none}
+  .side nav{flex-direction:row;flex-wrap:wrap;gap:8px}
+  .side .navlabel{flex:1 1 100%;padding:0}
+  .side .navbtn{width:auto;border:1px solid var(--line2);border-radius:999px;gap:10px}
+  .side .navbtn.on{border-color:var(--on)}
+  .sheet-head{display:flex}
+  body.sheet-filters .side,body.sheet-compose .composer{transform:none;visibility:visible;transition:transform .2s ease,visibility 0s}
+  body.sheet-filters .scrim,body.sheet-compose .scrim{display:block;position:fixed;inset:0;z-index:20;border:0;padding:0;background:var(--scrim)}
+  .tabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--side);border-top:1px solid var(--line);padding:4px 8px calc(8px + env(safe-area-inset-bottom,0px))}
+  .tab{flex:1;min-height:56px;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:600;color:var(--muted)}
+  .tab.on{color:var(--accent-ink)}
+  .fab{display:flex;position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:10;width:56px;height:56px;border:0;border-radius:18px;background:var(--accent);color:#fff;align-items:center;justify-content:center;box-shadow:0 8px 20px var(--shadow)}
+  .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+  textarea{min-height:110px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+
+/* Sign-in screen */
+.authwrap{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+.authcard{width:min(400px,100%);background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:14px}
+.authcard h2{margin:0;font-family:var(--display);font-size:26px;letter-spacing:-.01em}
+.authcard .brand{padding:0}
+.authcard label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
+.authcard input.field{width:100%;padding:0 14px}
+.authcard .primary,.authcard .ghost{width:100%}
+</style>
+
+<div class="app">
+  <aside class="side" id="side" aria-label="Filters">
+    <div class="brand"><span class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M9 11h6M9 15h4"/></svg></span>Jotter</div>
+    <div class="sheet-head"><h2>Filters</h2><button type="button" class="iconbtn" data-act="closeSheet" aria-label="Close filters"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+    <nav class="desk-only" aria-label="Collections"><div class="navlabel">Collections</div><div id="navViews" style="display:contents"></div></nav>
+    <nav aria-label="Status"><div class="navlabel">Status</div><div id="navStatus" style="display:contents"></div></nav>
+    <nav aria-label="Tags"><div class="navlabel">Tags</div><div id="navTags" style="display:contents"></div></nav>
+    <div class="mobile-only" style="flex-direction:column;gap:8px">
+      <label class="cap" for="sort2">Sort by</label>
+      <select class="field sortsel" id="sort2"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="az">A to Z</option></select>
+    </div>
+    <div class="mobile-only" style="gap:10px">
+      <button type="button" class="ghost" data-act="clear" style="flex:1">Clear all</button>
+      <button type="button" class="primary" data-act="closeSheet" style="flex:1" id="showBtn">Show notes</button>
+    </div>
+  </aside>
+
+  <main>
+    <header class="top">
+      <div>
+        <h1 id="heading">All notes</h1>
+        <div class="sub" id="sub"></div>
+      </div>
+      <div class="tools">
+        <label class="searchwrap"><span class="sr">Search notes</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+          <input type="search" class="field" id="search" placeholder="Search notes" autocomplete="off">
+        </label>
+        <label class="desk-only"><span class="sr">Sort notes</span>
+          <select class="field sortsel" id="sort"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="az">A to Z</option></select>
+        </label>
+        <button type="button" class="sqbtn" id="themeBtn" data-act="theme" aria-label="Switch to dark mode"></button>
+        <button type="button" class="sqbtn" id="signoutBtn" data-act="signout" aria-label="Sign out" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/></svg></button>
+        <button type="button" class="sqbtn mobile-only" id="filterBtn" data-act="openFilters" aria-label="Filters"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span class="badge" id="badge" hidden></span></button>
+      </div>
+    </header>
+
+    <div class="notice" id="notice" hidden>Cloud saving is not available here, so your notes are kept on this device only.</div>
+
+    <form class="composer" id="composer" autocomplete="off">
+      <div class="sheet-head"><h2 id="composerTitle">New note</h2><button type="button" class="iconbtn" data-act="closeSheet" aria-label="Close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+      <div class="kinds" role="group" aria-label="Note type" id="kinds"></div>
+      <label><span class="sr">Note text</span><textarea id="text" rows="2" placeholder="What is on your mind today?"></textarea></label>
+      <div class="crow">
+        <label>Tag <input type="text" id="tagIn" list="taglist" placeholder="optional" maxlength="24"></label>
+        <datalist id="taglist"></datalist>
+        <div class="cbtns"><button type="button" class="ghost" id="cancelEdit" data-act="cancelEdit" hidden>Cancel</button><button type="submit" class="primary" id="saveBtn">Add note</button></div>
+      </div>
+    </form>
+
+    <div class="filterline" id="filterline" hidden><span id="filtertext"></span><button type="button" class="chip" data-act="clear">Clear filters</button></div>
+
+    <section class="grid" id="list" aria-label="Notes" aria-live="polite"></section>
+    <div id="emptyBox"></div>
+  </main>
+</div>
+
+<nav class="tabs" id="tabs" aria-label="Collections"></nav>
+<button type="button" class="fab" data-act="openCompose" aria-label="Add a note"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+<button type="button" class="scrim" data-act="closeSheet" aria-label="Close"></button>
+<div class="toast" id="toast" role="status" hidden><span id="toastMsg"></span><button type="button" id="toastBtn" hidden>Undo</button></div>
+
+<div class="authwrap" id="auth" hidden>
+  <form class="authcard" id="authForm">
+    <div class="brand"><span class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M9 11h6M9 15h4"/></svg></span>Jotter</div>
+    <h2 id="authTitle">Sign in</h2>
+    <label>Email<input type="email" class="field" id="authEmail" required autocomplete="email"></label>
+    <label>Password<input type="password" class="field" id="authPass" required minlength="6" autocomplete="current-password"></label>
+    <div class="notice" id="authMsg" role="status" hidden></div>
+    <button type="submit" class="primary" id="authBtn">Sign in</button>
+    <button type="button" class="ghost" id="authSwitch">Create an account</button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+
+  var P = {
+    thought: '<path d="M4 5h16v11H9l-5 4z"/>',
+    todo: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+    wish: '<path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8z"/>',
+    all: '<path d="M4 6h16M4 12h16M4 18h10"/>',
+    pin: '<path d="M9 4h6l-1 6 3 3H7l3-3z"/><path d="M12 13v7"/>',
+    trash: '<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/>',
+    edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>',
+    moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>'
+  };
+  var svg = function (k, size, sw, fill) {
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="' + (fill || 'none') + '" stroke="currentColor" stroke-width="' + (sw || 2) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + P[k] + '</svg>';
+  };
+  var KINDS = {
+    thought: { label: 'Thought', cls: 'k-thought', ph: 'What is on your mind today?' },
+    todo: { label: 'To-do', cls: 'k-todo', ph: 'What needs to get done?' },
+    wish: { label: 'Wishlist', cls: 'k-wish', ph: 'What would you like to have someday?' }
+  };
+  var HEAD = { all: 'All notes', thought: 'Thoughts', todo: 'To-do list', wish: 'Wishlist' };
+
+  var S = { notes: [], ready: false, view: 'all', status: 'any', tag: 'all', pinnedOnly: false, sort: 'new', query: '', kind: 'thought', editingId: null, lastDeleted: null };
+  var store = null, signOutFn = null;
+
+  /* ---------- storage ---------- */
+  function localStore(onChange) {
+    var KEY = 'jotter-notes', mem = [];
+    try { mem = JSON.parse(localStorage.getItem(KEY) || '[]') || []; } catch (e) { mem = []; }
+    var save = function () { try { localStorage.setItem(KEY, JSON.stringify(mem)); } catch (e) {} onChange(mem.slice()); };
+    return {
+      local: true,
+      start: function () { onChange(mem.slice()); },
+      add: function (d) { var id = 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); mem.push(Object.assign({ id: id }, d)); save(); return Promise.resolve(id); },
+      patch: function (id, p) { mem = mem.map(function (n) { return n.id === id ? Object.assign({}, n, p) : n; }); save(); return Promise.resolve(); },
+      put: function (id, d) { mem = mem.filter(function (n) { return n.id !== id; }).concat([Object.assign({ id: id }, d)]); save(); return Promise.resolve(); },
+      remove: function (id) { mem = mem.filter(function (n) { return n.id !== id; }); save(); return Promise.resolve(); }
+    };
+  }
+  function cloudStore(col, onChange, onFail) {
+    return {
+      local: false,
+      start: function () {
+        col.onSnapshot(function (snap) {
+          onChange(snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }));
+        }, function () { onFail(); });
+      },
+      add: function (d) { return col.add(d).then(function (r) { return r.id; }); },
+      patch: function (id, p) { return col.doc(id).update(p); },
+      put: function (id, d) { return col.doc(id).set(d); },
+      remove: function (id) { return col.doc(id).delete(); }
+    };
+  }
+  /* ---------- Supabase storage and sign-in ---------- */
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 3 | 8)).toString(16);
+    });
+  }
+  function supaStore(client, uid, onChange) {
+    var T = 'notes', mem = [], chan = null, timer = null, retry = null, stopped = false;
+    function fromRow(r) {
+      return { id: r.id, kind: r.kind, text: r.text, tag: r.tag || '', done: !!r.done, pinned: !!r.pinned, createdAt: Number(r.created_at) || 0, updatedAt: Number(r.updated_at) || 0 };
+    }
+    function toRow(d) {
+      var r = {};
+      if ('kind' in d) r.kind = d.kind;
+      if ('text' in d) r.text = d.text;
+      if ('tag' in d) r.tag = d.tag || '';
+      if ('done' in d) r.done = !!d.done;
+      if ('pinned' in d) r.pinned = !!d.pinned;
+      if ('createdAt' in d) r.created_at = d.createdAt;
+      if ('updatedAt' in d) r.updated_at = d.updatedAt;
+      return r;
+    }
+    function emit() { if (!stopped) onChange(mem.slice()); }
+    function load() {
+      return client.from(T).select('*').then(function (res) {
+        if (res.error) throw res.error;
+        mem = (res.data || []).map(fromRow);
+        emit();
+      });
+    }
+    function check(res) {
+      if (res && res.error) { load().catch(function () {}); throw res.error; }
+    }
+    function firstLoad() {
+      load().catch(function () {
+        if (stopped) return;
+        toast('Could not load your notes. Retrying...');
+        retry = setTimeout(firstLoad, 5000);
+      });
+    }
+    return {
+      local: false,
+      start: function () {
+        firstLoad();
+        chan = client.channel('notes-' + uid)
+          .on('postgres_changes', { event: '*', schema: 'public', table: T }, function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () { load().catch(function () {}); }, 250);
+          })
+          .subscribe();
+      },
+      stop: function () {
+        stopped = true; clearTimeout(timer); clearTimeout(retry);
+        if (chan) { try { client.removeChannel(chan); } catch (e) {} }
+      },
+      refresh: function () { load().catch(function () {}); },
+      add: function (d) {
+        var id = uuid(), row = toRow(d);
+        row.id = id;
+        mem.push(Object.assign({ id: id }, d)); emit();
+        return client.from(T).insert(row).then(function (res) { check(res); return id; });
+      },
+      patch: function (id, p) {
+        mem = mem.map(function (n) { return n.id === id ? Object.assign({}, n, p) : n; }); emit();
+        return client.from(T).update(toRow(p)).eq('id', id).then(check);
+      },
+      put: function (id, d) {
+        mem = mem.filter(function (n) { return n.id !== id; }).concat([Object.assign({ id: id }, d)]); emit();
+        var row = toRow(d); row.id = id;
+        return client.from(T).upsert(row).then(check);
+      },
+      remove: function (id) {
+        mem = mem.filter(function (n) { return n.id !== id; }); emit();
+        return client.from(T).delete().eq('id', id).then(check);
+      }
+    };
+  }
+
+  function bootSupabase(cfg) {
+    var client = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+    var current = null, mode = 'in';
+    var authBox = $('#auth'), msg = $('#authMsg');
+
+    function showMsg(t) { msg.textContent = t || ''; msg.hidden = !t; }
+    function setMode(m) {
+      mode = m; showMsg('');
+      $('#authTitle').textContent = m === 'in' ? 'Sign in' : 'Create account';
+      $('#authBtn').textContent = m === 'in' ? 'Sign in' : 'Create account';
+      $('#authSwitch').textContent = m === 'in' ? 'Create an account' : 'I already have an account';
+      $('#authPass').setAttribute('autocomplete', m === 'in' ? 'current-password' : 'new-password');
+    }
+    function leave() {
+      if (store && store.stop) store.stop();
+      store = null; current = null; S.notes = []; S.ready = false; render();
+    }
+    function enter(session) {
+      var id = session && session.user ? session.user.id : null;
+      if (id && id === current) return;
+      leave();
+      if (!id) { $('#signoutBtn').hidden = true; authBox.hidden = false; return; }
+      current = id; authBox.hidden = true; $('#authPass').value = ''; $('#signoutBtn').hidden = false;
+      store = supaStore(client, id, setNotes);
+      store.start();
+    }
+
+    signOutFn = function () { Promise.resolve(client.auth.signOut()).catch(function () {}); };
+
+    $('#authSwitch').addEventListener('click', function () { setMode(mode === 'in' ? 'up' : 'in'); });
+    $('#authForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var email = $('#authEmail').value.trim(), pass = $('#authPass').value, btn = $('#authBtn');
+      btn.disabled = true; showMsg('');
+      try {
+        if (mode === 'in') {
+          var r = await client.auth.signInWithPassword({ email: email, password: pass });
+          if (r.error) showMsg(r.error.message);
+        } else {
+          var r2 = await client.auth.signUp({ email: email, password: pass });
+          if (r2.error) showMsg(r2.error.message);
+          else if (!r2.data || !r2.data.session) { setMode('in'); showMsg('Account created. Check your email to confirm it, then sign in.'); }
+        }
+      } catch (err) { showMsg('Could not reach the server. Check your connection.'); }
+      btn.disabled = false;
+    });
+
+    // Never call the client from inside this callback directly; defer it.
+    client.auth.onAuthStateChange(function (_event, session) { setTimeout(function () { enter(session); }, 0); });
+    client.auth.getSession().then(function (r) { enter(r && r.data ? r.data.session : null); }).catch(function () { enter(null); });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden && store && store.refresh) store.refresh(); });
+  }
+
+  function setNotes(list) { S.notes = list; S.ready = true; render(); }
+  function useLocal() {
+    store = localStore(setNotes);
+    if (!window.claude) $('#notice').textContent = 'Sync is not set up yet, so your notes are kept on this device only. See the README to connect Supabase.';
+    $('#notice').hidden = false; store.start();
+  }
+
+  async function boot() {
+    var cfg = window.JOTTER_CONFIG || {};
+    if (cfg.supabaseUrl && cfg.supabaseKey && cfg.supabaseUrl.indexOf('YOUR_') === -1 && window.supabase && window.supabase.createClient) { bootSupabase(cfg); return; }
+    var db = null, uid = null;
+    try {
+      if (window.claude && window.claude.use) {
+        db = await window.claude.use('db');
+        var user = await window.claude.use('user');
+        uid = user ? await user.id() : null;
+      }
+    } catch (e) { db = null; }
+    if (db && uid) {
+      try {
+        var col = db.doc('data/users/' + uid + '/profile').collection('notes');
+        store = cloudStore(col, setNotes, useLocal);
+        store.start();
+        return;
+      } catch (e) {}
+    }
+    useLocal();
+  }
+
+  /* ---------- filtering ---------- */
+  function matches(n, skip) {
+    var q = S.query.trim().toLowerCase();
+    if (skip !== 'view' && S.view !== 'all' && n.kind !== S.view) return false;
+    if (skip !== 'status') {
+      if (S.status === 'open' && !(n.kind !== 'thought' && !n.done)) return false;
+      if (S.status === 'done' && !(n.kind !== 'thought' && n.done)) return false;
+    }
+    if (skip !== 'tag' && S.tag !== 'all' && n.tag !== S.tag) return false;
+    if (skip !== 'pinned' && S.pinnedOnly && !n.pinned) return false;
+    if (q && ((n.text || '') + ' ' + (n.tag || '')).toLowerCase().indexOf(q) === -1) return false;
+    return true;
+  }
+  function dateLabel(ts) {
+    if (!ts) return '';
+    var d = new Date(ts), now = new Date();
+    var day = function (x) { return new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); };
+    var diff = Math.round((day(now) - day(d)) / 86400000);
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Yesterday';
+    var o = { month: 'short', day: 'numeric' };
+    if (d.getFullYear() !== now.getFullYear()) o.year = 'numeric';
+    return d.toLocaleDateString('en-US', o);
+  }
+
+  /* ---------- render ---------- */
+  function navBtn(act, key, label, count, on) {
+    return '<button type="button" class="navbtn' + (on ? ' on' : '') + '" data-act="' + act + '" data-key="' + esc(key) + '" data-fk="' + act + ':' + esc(key) + '" aria-pressed="' + on + '"><span>' + esc(label) + '</span><span class="ct">' + count + '</span></button>';
+  }
+  function render() {
+    var all = S.notes, active = document.activeElement, fk = active && active.getAttribute ? active.getAttribute('data-fk') : null;
+
+    var visible = all.filter(function (n) { return matches(n); });
+    visible.sort(function (a, b) {
+      if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+      if (S.sort === 'az') return String(a.text || '').localeCompare(String(b.text || ''));
+      if (S.sort === 'old') return (a.createdAt || 0) - (b.createdAt || 0);
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+
+    var views = [['all', 'All notes'], ['thought', 'Thoughts'], ['todo', 'To-do'], ['wish', 'Wishlist']];
+    $('#navViews').innerHTML = views.map(function (v) {
+      var c = all.filter(function (n) { return matches(n, 'view') && (v[0] === 'all' || n.kind === v[0]); }).length;
+      return navBtn('view', v[0], v[1], c, S.view === v[0]);
+    }).join('');
+
+    var sts = [['any', 'Any status'], ['open', 'Open'], ['done', 'Done or got']];
+    $('#navStatus').innerHTML = sts.map(function (v) {
+      var c = all.filter(function (n) { return matches(n, 'status') && (v[0] === 'any' || (n.kind !== 'thought' && (v[0] === 'done' ? n.done : !n.done))); }).length;
+      return navBtn('status', v[0], v[1], c, S.status === v[0]);
+    }).join('') + navBtn('pinned', 'pinned', 'Pinned only', all.filter(function (n) { return n.pinned; }).length, S.pinnedOnly);
+
+    var tagNames = [];
+    all.forEach(function (n) { if (n.tag && tagNames.indexOf(n.tag) === -1) tagNames.push(n.tag); });
+    tagNames.sort(function (a, b) { return a.localeCompare(b); });
+    if (S.tag !== 'all' && tagNames.indexOf(S.tag) === -1) S.tag = 'all';
+    $('#navTags').innerHTML = [['all', 'All tags']].concat(tagNames.map(function (t) { return [t, '# ' + t]; })).map(function (v) {
+      var c = all.filter(function (n) { return matches(n, 'tag') && (v[0] === 'all' || n.tag === v[0]); }).length;
+      return navBtn('tag', v[0], v[1], c, S.tag === v[0]);
+    }).join('');
+    $('#taglist').innerHTML = tagNames.map(function (t) { return '<option value="' + esc(t) + '"></option>'; }).join('');
+
+    $('#tabs').innerHTML = [['all', 'All'], ['thought', 'Thoughts'], ['todo', 'To-do'], ['wish', 'Wishlist']].map(function (v) {
+      return '<button type="button" class="tab' + (S.view === v[0] ? ' on' : '') + '" data-act="view" data-key="' + v[0] + '" data-fk="tab:' + v[0] + '" aria-pressed="' + (S.view === v[0]) + '">' + svg(v[0] === 'all' ? 'all' : v[0], 22) + v[1] + '</button>';
+    }).join('');
+
+    $('#kinds').innerHTML = ['thought', 'todo', 'wish'].map(function (k) {
+      return '<button type="button" class="chip' + (S.kind === k ? ' on' : '') + '" data-act="kind" data-key="' + k + '" data-fk="kind:' + k + '" aria-pressed="' + (S.kind === k) + '">' + svg(k, 16) + KINDS[k].label + '</button>';
+    }).join('');
+    $('#text').placeholder = KINDS[S.kind].ph;
+    $('#saveBtn').textContent = S.editingId ? 'Save changes' : 'Add note';
+    $('#composerTitle').textContent = S.editingId ? 'Edit note' : 'New note';
+    $('#cancelEdit').hidden = !S.editingId;
+
+    $('#heading').textContent = HEAD[S.view];
+    var today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    $('#sub').textContent = today + ' · ' + visible.length + (visible.length === 1 ? ' note' : ' notes');
+    $('#showBtn').textContent = 'Show ' + visible.length + (visible.length === 1 ? ' note' : ' notes');
+
+    var parts = [];
+    if (S.status !== 'any') parts.push(S.status === 'open' ? 'open items' : 'done or got');
+    if (S.tag !== 'all') parts.push('#' + S.tag);
+    if (S.pinnedOnly) parts.push('pinned');
+    if (S.query.trim()) parts.push('“' + S.query.trim() + '”');
+    $('#filterline').hidden = !parts.length;
+    $('#filtertext').textContent = 'Filtering by ' + parts.join(', ');
+    var b = $('#badge'); b.hidden = !parts.length; b.textContent = parts.length;
+    $('#filterBtn').setAttribute('aria-label', parts.length ? 'Filters, ' + parts.length + ' active' : 'Filters');
+    $('#sort').value = S.sort; $('#sort2').value = S.sort;
+
+    $('#list').innerHTML = visible.map(function (n) {
+      var k = KINDS[n.kind] || KINDS.thought, can = n.kind !== 'thought', done = can && n.done;
+      var lbl = n.kind === 'wish' ? 'got' : 'done';
+      return '<article class="card' + (done ? ' is-done' : '') + '">' +
+        '<div class="ctop"><span class="kindchip ' + k.cls + '">' + svg(n.kind in KINDS ? n.kind : 'thought', 14, 2.2) + k.label + '</span><span class="date">' + esc(dateLabel(n.createdAt)) + '</span></div>' +
+        '<div class="cbody">' + (can ? '<button type="button" class="check" data-act="toggle" data-id="' + esc(n.id) + '" data-fk="toggle:' + esc(n.id) + '" aria-pressed="' + !!done + '" aria-label="' + (done ? 'Mark as not ' : 'Mark as ') + lbl + '"><span class="box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span></button>' : '') +
+        '<p class="text">' + esc(n.text) + '</p></div>' +
+        '<div class="cfoot"><span class="tag">' + (n.tag ? '# ' + esc(n.tag) : '') + '</span><div class="acts">' +
+        '<button type="button" class="iconbtn" data-act="edit" data-id="' + esc(n.id) + '" data-fk="edit:' + esc(n.id) + '" aria-label="Edit note">' + svg('edit', 20) + '</button>' +
+        '<button type="button" class="iconbtn' + (n.pinned ? ' pinned' : '') + '" data-act="pin" data-id="' + esc(n.id) + '" data-fk="pin:' + esc(n.id) + '" aria-pressed="' + !!n.pinned + '" aria-label="' + (n.pinned ? 'Unpin note' : 'Pin note') + '">' + svg('pin', 20, 2, n.pinned ? 'currentColor' : 'none') + '</button>' +
+        '<button type="button" class="iconbtn" data-act="del" data-id="' + esc(n.id) + '" data-fk="del:' + esc(n.id) + '" aria-label="Delete note">' + svg('trash', 20) + '</button>' +
+        '</div></div></article>';
+    }).join('');
+
+    var e = '';
+    if (!S.ready) e = '<div class="empty"><span>Loading your notes…</span></div>';
+    else if (!all.length) e = '<div class="empty"><strong>Nothing here yet</strong><span>Write your first thought, to-do or wish. Notes are saved as soon as you add them.</span></div>';
+    else if (!visible.length) e = '<div class="empty"><strong>No notes match</strong><span>Try a different filter or search.</span><button type="button" class="chip" data-act="clear">Clear filters</button></div>';
+    $('#emptyBox').innerHTML = e;
+
+    var dark = effTheme() === 'dark', tb = $('#themeBtn');
+    tb.innerHTML = svg(dark ? 'sun' : 'moon', 20);
+    tb.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+
+    if (fk) { var el = document.querySelector('[data-fk="' + fk.replace(/"/g, '\\"') + '"]'); if (el && el !== document.activeElement) el.focus(); }
+  }
+
+  /* ---------- theme ---------- */
+  function effTheme() {
+    var d = document.documentElement.getAttribute('data-theme');
+    if (d === 'dark' || d === 'light') return d;
+    return window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  try { var saved = localStorage.getItem('jotter-theme'); if (saved === 'dark' || saved === 'light') document.documentElement.setAttribute('data-theme', saved); } catch (e) {}
+
+  /* ---------- toast ---------- */
+  var toastTimer = null;
+  function toast(msg, undo) {
+    $('#toastMsg').textContent = msg;
+    $('#toastBtn').hidden = !undo;
+    $('#toast').hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { $('#toast').hidden = true; }, 6000);
+  }
+  function fail() { toast('Could not save that. Check your connection and try again.'); }
+
+  /* ---------- actions ---------- */
+  function find(id) { return S.notes.filter(function (n) { return n.id === id; })[0]; }
+  function closeSheet() { document.body.classList.remove('sheet-filters', 'sheet-compose'); }
+  function resetComposer() { S.editingId = null; $('#text').value = ''; $('#tagIn').value = ''; }
+
+  document.addEventListener('click', function (ev) {
+    var t = ev.target.closest ? ev.target.closest('[data-act]') : null;
+    if (!t) return;
+    var act = t.getAttribute('data-act'), key = t.getAttribute('data-key'), id = t.getAttribute('data-id'), n;
+    if (act === 'view') { S.view = key; if (key !== 'all') S.kind = key; render(); }
+    else if (act === 'status') { S.status = key; render(); }
+    else if (act === 'tag') { S.tag = key; render(); }
+    else if (act === 'pinned') { S.pinnedOnly = !S.pinnedOnly; render(); }
+    else if (act === 'kind') { S.kind = key; render(); }
+    else if (act === 'clear') { S.status = 'any'; S.tag = 'all'; S.pinnedOnly = false; S.query = ''; $('#search').value = ''; render(); }
+    else if (act === 'toggle') { n = find(id); if (n) store.patch(id, { done: !n.done }).catch(fail); }
+    else if (act === 'pin') { n = find(id); if (n) store.patch(id, { pinned: !n.pinned }).catch(fail); }
+    else if (act === 'del') {
+      n = find(id); if (!n) return;
+      var copy = Object.assign({}, n); delete copy.id; S.lastDeleted = { id: id, data: copy };
+      store.remove(id).then(function () { toast('Note deleted', true); }).catch(fail);
+    }
+    else if (act === 'edit') {
+      n = find(id); if (!n) return;
+      S.editingId = id; S.kind = n.kind in KINDS ? n.kind : 'thought';
+      $('#text').value = n.text || ''; $('#tagIn').value = n.tag || '';
+      render(); document.body.classList.add('sheet-compose'); $('#text').focus();
+      if (window.innerWidth > 760) $('#composer').scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+    else if (act === 'cancelEdit') { resetComposer(); render(); closeSheet(); }
+    else if (act === 'theme') {
+      var next = effTheme() === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('jotter-theme', next); } catch (e) {}
+      render();
+    }
+    else if (act === 'signout') { if (signOutFn) signOutFn(); }
+    else if (act === 'openFilters') { closeSheet(); document.body.classList.add('sheet-filters'); }
+    else if (act === 'openCompose') { closeSheet(); document.body.classList.add('sheet-compose'); setTimeout(function () { $('#text').focus(); }, 50); }
+    else if (act === 'closeSheet') { closeSheet(); }
+  });
+
+  $('#toastBtn').addEventListener('click', function () {
+    var d = S.lastDeleted; if (!d) return;
+    $('#toast').hidden = true; S.lastDeleted = null;
+    store.put(d.id, d.data).catch(fail);
+  });
+
+  $('#search').addEventListener('input', function (e) { S.query = e.target.value; render(); });
+  document.addEventListener('change', function (e) {
+    if (e.target.classList && e.target.classList.contains('sortsel')) { S.sort = e.target.value; render(); }
+  });
+
+  function submit() {
+    var text = $('#text').value.trim();
+    if (!text) { $('#text').focus(); return; }
+    var tag = $('#tagIn').value.trim().replace(/^#/, '');
+    var p;
+    if (S.editingId) p = store.patch(S.editingId, { kind: S.kind, text: text, tag: tag, updatedAt: Date.now() });
+    else p = store.add({ kind: S.kind, text: text, tag: tag, done: false, pinned: false, createdAt: Date.now() });
+    resetComposer(); render(); closeSheet();
+    p.catch(fail);
+  }
+  $('#composer').addEventListener('submit', function (e) { e.preventDefault(); submit(); });
+  $('#text').addEventListener('keydown', function (e) { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); submit(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheet(); });
+
+  render();
+  boot();
+})();
+</script>
+
+</body></html>
